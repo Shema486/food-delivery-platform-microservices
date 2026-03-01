@@ -4,4 +4,5 @@ import org.springframework.cloud.openfeign.FeignClient;
 
 @FeignClient("DELIVERY-SERVICE")
 public interface DeliveryInterface {
+
 }

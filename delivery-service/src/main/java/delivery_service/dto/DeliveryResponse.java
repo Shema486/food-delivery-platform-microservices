@@ -39,8 +39,8 @@ public class DeliveryResponse {
         dto.setCreatedAt(d.getCreatedAt());
 
         // MONOLITH: cross-domain entity traversal
-//        dto.setOrderId(d.getOrder().getId());
-//        dto.setOrderStatus(d.getOrder().getStatus().name());
+        dto.setOrderId(d.getOrderId());
+//        dto.setOrderStatus(d.getStatus().name());
 //        dto.setCustomerId(d.getOrder().getCustomer().getId());
 //        dto.setCustomerName(d.getOrder().getCustomer().getFirstName()
 //                + " " + d.getOrder().getCustomer().getLastName());

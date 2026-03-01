@@ -1,5 +1,7 @@
 package restaurant_service.service;
 
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import restaurant_service.config.RabbitMQConfig;
 import restaurant_service.dto.MenuItemRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -7,10 +9,13 @@ import org.springframework.transaction.annotation.Transactional;
 import restaurant_service.dto.MenuItemResponse;
 import restaurant_service.dto.RestaurantRequest;
 import restaurant_service.dto.RestaurantResponse;
+import restaurant_service.dto.external.CustomerResponse;
+import restaurant_service.dto.external.RestaurantCreatedEvent;
 import restaurant_service.entity.MenuItem;
 import restaurant_service.entity.Restaurant;
 import restaurant_service.exception.ResourceNotFoundException;
 import restaurant_service.exception.UnauthorizedException;
+import restaurant_service.feign.CustomerInterface;
 import restaurant_service.repository.MenuItemRepository;
 import restaurant_service.repository.RestaurantRepository;
 
@@ -27,6 +32,8 @@ public class RestaurantService {
 
     private final RestaurantRepository restaurantRepository;
     private final MenuItemRepository menuItemRepository;
+    private final CustomerInterface customerServices;
+    private final RabbitTemplate rabbitTemplate;
 //    private final CustomerRepository customerRepository; // CROSS-DOMAIN DEPENDENCY
 
 
@@ -34,28 +41,34 @@ public class RestaurantService {
     @Transactional
     public RestaurantResponse createRestaurant(String ownerUsername, RestaurantRequest request) {
         // MONOLITH: directly accessing Customer entity from Restaurant domain
-//        Customer owner = customerRepository.findByUsername(ownerUsername)
-//                .orElseThrow(() -> new ResourceNotFoundException("Customer", "username", ownerUsername));
-//
-//        // Promote to RESTAURANT_OWNER if needed
-//        if (owner.getRole() == Customer.Role.CUSTOMER) {
-//            owner.setRole(Customer.Role.RESTAURANT_OWNER);
-//            customerRepository.save(owner);
-//        }
-//
-//        Restaurant restaurant = Restaurant.builder()
-//                .name(request.getName())
-//                .description(request.getDescription())
-//                .cuisineType(request.getCuisineType())
-//                .address(request.getAddress())
-//                .city(request.getCity())
-//                .phone(request.getPhone())
-//                .estimatedDeliveryMinutes(request.getEstimatedDeliveryMinutes())
-//                .owner(owner) // MONOLITH: direct entity reference across domains
-//                .build();
+        CustomerResponse owner = customerServices.getName(ownerUsername);
 
-//        return RestaurantResponse.fromEntity(restaurantRepository.save(restaurant));
-        return null;
+        Restaurant restaurant = Restaurant.builder()
+                .name(request.getName())
+                .description(request.getDescription())
+                .cuisineType(request.getCuisineType())
+                .address(request.getAddress())
+                .city(request.getCity())
+                .phone(request.getPhone())
+                .estimatedDeliveryMinutes(request.getEstimatedDeliveryMinutes())
+                .ownerId(owner.getId()) // MONOLITH: direct entity reference across domains
+                .build();
+
+        Restaurant savedRestaurant = restaurantRepository.save(restaurant);
+
+        // Publish — Customer Service will promote the owner role on its own
+        RestaurantCreatedEvent event = new RestaurantCreatedEvent(
+                savedRestaurant.getId(), // restaurantId will be set after saving
+                request.getName(),
+                owner.getId(),
+                ownerUsername
+        );
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.RESTAURANT_EXCHANGE,
+                RabbitMQConfig.RESTAURANT_CREATED_KEY,
+                event);
+        return RestaurantResponse.fromEntity(savedRestaurant);
+
     }
 
     @Transactional(readOnly = true)
@@ -90,10 +103,12 @@ public class RestaurantService {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Restaurant", "id", restaurantId));
 
+        CustomerResponse owner = customerServices.getName(ownerUsername);
+
         // MONOLITH: cross-domain ownership check via entity traversal
-//        if (!restaurant.getOwner().getUsername().equals(ownerUsername)) {
-//            throw new UnauthorizedException("You don't own this restaurant");
-//        }
+        if (!restaurant.getOwnerId().equals(owner.getId())) {
+            throw new UnauthorizedException("You don't own this restaurant");
+        }
 
         MenuItem item = MenuItem.builder()
                 .name(request.getName())
@@ -117,11 +132,12 @@ public class RestaurantService {
     public MenuItemResponse updateMenuItem(Long itemId, String ownerUsername, MenuItemRequest request) {
         MenuItem item = menuItemRepository.findById(itemId)
                 .orElseThrow(() -> new ResourceNotFoundException("MenuItem", "id", itemId));
+        CustomerResponse owner = customerServices.getName(ownerUsername);
 
         // MONOLITH: cross-domain ownership check
-//        if (!item.getRestaurant().getOwner().getUsername().equals(ownerUsername)) {
-//            throw new UnauthorizedException("You don't own this restaurant");
-//        }
+        if (!item.getRestaurant().getOwnerId().equals(owner.getId())) {
+            throw new UnauthorizedException("You don't own this restaurant");
+        }
 
         if (request.getName() != null) item.setName(request.getName());
         if (request.getDescription() != null) item.setDescription(request.getDescription());
@@ -136,9 +152,11 @@ public class RestaurantService {
         MenuItem item = menuItemRepository.findById(itemId)
                 .orElseThrow(() -> new ResourceNotFoundException("MenuItem", "id", itemId));
 
-//        if (!item.getRestaurant().getOwner().getUsername().equals(ownerUsername)) {
-//            throw new UnauthorizedException("You don't own this restaurant");
-//        }
+        CustomerResponse owner = customerServices.getName(ownerUsername);
+
+        if (!item.getRestaurant().getOwnerId().equals(owner.getId())) {
+            throw new UnauthorizedException("You don't own this restaurant");
+        }
 
         item.setAvailable(!item.isAvailable());
         menuItemRepository.save(item);

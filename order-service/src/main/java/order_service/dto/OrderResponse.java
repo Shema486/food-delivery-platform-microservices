@@ -25,6 +25,7 @@ public class OrderResponse {
     private String customerName;
     private Long restaurantId;
     private String restaurantName;
+    private String restaurantAddress;
 
     // Delivery info embedded (monolith convenience)
     private String deliveryStatus;
@@ -51,12 +52,13 @@ public class OrderResponse {
         dto.setCreatedAt(o.getCreatedAt());
         dto.setEstimatedDeliveryTime(o.getEstimatedDeliveryTime());
 
-//        // MONOLITH: cross-domain entity traversal
-//        dto.setCustomerId(o.getCustomer().getId());
-//        dto.setCustomerName(o.getCustomer().getFirstName() + " " + o.getCustomer().getLastName());
-//        dto.setRestaurantId(o.getRestaurant().getId());
-//        dto.setRestaurantName(o.getRestaurant().getName());
-//
+        // MONOLITH: cross-domain entity traversal
+        dto.setCustomerId(o.getCustomerId());
+        dto.setCustomerName(o.getCustomerName());
+        dto.setRestaurantId(o.getRestaurantId());
+        dto.setRestaurantName(o.getRestaurantName());
+        dto.setRestaurantAddress(o.getRestaurantAddress());
+
 //        // MONOLITH: cross-domain delivery info
 //        if (o.getDelivery() != null) {
 //            dto.setDeliveryStatus(o.getDelivery().getStatus().name());
@@ -68,7 +70,7 @@ public class OrderResponse {
         dto.setItems(o.getItems().stream().map(item -> {
             OrderItemDetail detail = new OrderItemDetail();
             detail.setId(item.getId());
-//            detail.setItemName(item.getMenuItem().getName()); // MONOLITH: cross-domain!
+            detail.setItemName(item.getItemName()); // MONOLITH: cross-domain!
             detail.setQuantity(item.getQuantity());
             detail.setUnitPrice(item.getUnitPrice());
             detail.setSubtotal(item.getSubtotal());
@@ -77,4 +79,6 @@ public class OrderResponse {
 
         return dto;
     }
+
+
 }

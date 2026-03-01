@@ -36,8 +36,8 @@ public class RestaurantResponse {
         dto.setEstimatedDeliveryMinutes(r.getEstimatedDeliveryMinutes());
         dto.setMenuItemCount(r.getMenuItems() != null ? r.getMenuItems().size() : 0);
         // MONOLITH: cross-domain entity traversal
-//        dto.setOwnerId(r.getOwner().getId());
-//        dto.setOwnerName(r.getOwner().getFirstName() + " " + r.getOwner().getLastName());
+        dto.setOwnerId(r.getId());
+        dto.setOwnerName(r.getName());
         return dto;
     }
 }

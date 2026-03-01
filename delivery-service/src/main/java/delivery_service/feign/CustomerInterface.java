@@ -12,7 +12,7 @@ public interface CustomerInterface {
     CustomerResponse getName(@PathVariable String username);
 
     @GetMapping("/{id}/exists")
-    public ResponseEntity<Boolean> existsById(@PathVariable Long id);
+    Boolean existsById(@PathVariable Long id);
 
     @GetMapping("/{id}")
     CustomerResponse getById(@PathVariable Long id) ;

@@ -50,9 +50,13 @@ public class Order {
     private LocalDateTime estimatedDeliveryTime;
 
 
+    /** Snapshot of  from other services captured at order placement time. */
+    private String customerName;
+    private String restaurantName;
     private Long customerId;    // Refers to customer-service
     private Long restaurantId; // Refers to restaurant-service
-//    private Long deliveryId;  // Refers to delivery-service
+    private Long deliveryId;  // Refers to delivery-service
+    private String restaurantAddress;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
@@ -72,6 +76,8 @@ public class Order {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
+
+
 
     public enum OrderStatus {
         PLACED,
