@@ -1,0 +1,140 @@
+services:
+
+  rabbitmq:
+    container_name: RABBITMQ
+    image: rabbitmq:management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  customer-db:
+    container_name: CUSTOMER-DB
+    image: postgres:18.2-alpine
+    environment:
+      POSTGRES_DB: customer_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - delivery-db-data:/var/lib/postgresql/data
+
+  restaurant-db:
+    container_name: RESTAURANT-DB
+    image: postgres:18.2-alpine
+    environment:
+      POSTGRES_DB: restaurant_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5434:5432"
+    volumes:
+      - delivery-db-data:/var/lib/postgresql/data
+
+  order-db:
+    container_name: ORDER-DB
+    image: postgres:18.2-alpine
+    environment:
+      POSTGRES_DB: order_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5435:5432"
+    volumes:
+      - delivery-db-data:/var/lib/postgresql/data
+
+  delivery-db:
+    container_name: DELIVERY-DB
+    image: postgres:18.2-alpine
+    environment:
+      POSTGRES_DB: delivery_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5436:5432"
+    volumes:
+      - delivery-db-data:/var/lib/postgresql/data
+
+  registry-service:
+    container_name: REGISTRY-SERVICE
+    build: ./registry-service
+    ports:
+      - "8761:8761"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+
+  customer-service:
+    container_name: CUSTOMER-SERVICE
+    build: ./customer-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - customer-db
+      - registry-service
+      - rabbitmq
+
+  restaurant-service:
+    container_name: RESTAURANT-SERVICE
+    build: ./restaurant-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - restaurant-db
+      - registry-service
+      - rabbitmq
+
+  order-service:
+    container_name: ORDER-SERVICE
+    build: ./order-service
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - order-db
+      - registry-service
+      - rabbitmq
+
+  delivery-service:
+    container_name: DELIVERY-SERVICE
+    build: ./delivery-service
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - delivery-db
+      - registry-service
+      - rabbitmq
+
+  api-gateway:
+    container_name: API-GATEWAY
+    build: ./api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - registry-service
+      - customer-service
+      - restaurant-service
+      - order-service
+      - delivery-service
+volumes:
+    customer-db-data:
+    restaurant-db-data:
+    order-db-data:
+    delivery-db-data:
+

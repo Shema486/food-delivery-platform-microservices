@@ -46,4 +46,7 @@ public class OrderItem {
 
     // Stores the ID of the menu item from restaurant-service
     private Long menuItemId;
+    /** Snapshot of the menu item name captured at order placement time. */
+    private String itemName;
+
 }
