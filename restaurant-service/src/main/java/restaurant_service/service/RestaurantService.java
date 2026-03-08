@@ -106,8 +106,8 @@ public class RestaurantService {
         CustomerResponse owner = customerServices.getName(ownerUsername);
 
         // MONOLITH: cross-domain ownership check via entity traversal
-        if (!restaurant.getOwnerId().equals(owner.getId())) {
-            throw new UnauthorizedException("You don't own this restaurant");
+        if (!owner.getRole().equals("RESTAURANT_OWNER")) {
+            throw new UnauthorizedException("Only owners can add menu items");
         }
 
         MenuItem item = MenuItem.builder()

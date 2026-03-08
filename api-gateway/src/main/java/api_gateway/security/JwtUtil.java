@@ -1,4 +1,4 @@
-package delivery_service.security;
+package api_gateway.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -11,25 +11,14 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    @Value("${app.jwt.secret}")
-    private String secret;
+//    @Value("${app.jwt.secret}")
+    private String secret="93d6481833580e09a17c23b6541285dfd8ebdf3e2929cd82c77cfcdeb2ea0dd3";
 
-    @Value("${app.jwt.expiration-ms}")
-    private long expirationMs;
 
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateToken(String username, String role) {
-        return Jwts.builder()
-                .subject(username)
-                .claim("role", role)
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + expirationMs))
-                .signWith(getSigningKey())
-                .compact();
-    }
 
     public String extractUsername(String token) {
         return extractClaims(token).getSubject();
@@ -52,3 +41,4 @@ public class JwtUtil {
                 .getPayload();
     }
 }
+

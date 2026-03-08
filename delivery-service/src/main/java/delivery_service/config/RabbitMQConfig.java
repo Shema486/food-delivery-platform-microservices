@@ -32,7 +32,7 @@ public class RabbitMQConfig {
     @Bean
     public Queue deliveryOrderPlacedQueue() {return new Queue(DELIVERY_ORDER_PLACED_QUEUE);}
 
-    @Bean Queue orderCancelledQueue() {return new Queue(DELIVERY_ORDER_PLACED_QUEUE);}
+    @Bean Queue orderCancelledQueue() {return new Queue(DELIVERY_ORDER_CANCELLED_QUEUE);}
 
     @Bean
     public MessageConverter jsonMessageConverter() {

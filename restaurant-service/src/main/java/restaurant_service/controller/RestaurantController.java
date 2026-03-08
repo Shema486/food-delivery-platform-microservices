@@ -4,7 +4,7 @@ package restaurant_service.controller;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+
 import org.springframework.web.bind.annotation.*;
 import restaurant_service.dto.MenuItemRequest;
 import restaurant_service.dto.MenuItemResponse;
@@ -41,10 +41,10 @@ public class RestaurantController {
         return ResponseEntity.ok(restaurantService.getAllActive());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<RestaurantResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(restaurantService.getById(id));
-    }
+//    @GetMapping("/{id}")
+//    public ResponseEntity<RestaurantResponse> getById(@PathVariable Long id) {
+//        return ResponseEntity.ok(restaurantService.getById(id));
+//    }
 
     @GetMapping("/{id}/menu")
     public ResponseEntity<List<MenuItemResponse>> getMenu(@PathVariable Long id) {
@@ -55,32 +55,32 @@ public class RestaurantController {
 
     @PostMapping
     public ResponseEntity<RestaurantResponse> create(
-            Authentication auth, @Valid @RequestBody RestaurantRequest request) {
+             @RequestHeader("X-Authenticated-User") String username, @Valid @RequestBody RestaurantRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(restaurantService.createRestaurant(auth.getName(), request));
+                .body(restaurantService.createRestaurant(username, request));
     }
 
     @PostMapping("/{restaurantId}/menu")
     public ResponseEntity<MenuItemResponse> addMenuItem(
             @PathVariable Long restaurantId,
-            Authentication auth,
+             @RequestHeader("X-Authenticated-User") String username,
             @Valid @RequestBody MenuItemRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(restaurantService.addMenuItem(restaurantId, auth.getName(), request));
+                .body(restaurantService.addMenuItem(restaurantId, username, request));
     }
 //
     @PutMapping("/menu/{itemId}")
     public ResponseEntity<MenuItemResponse> updateMenuItem(
             @PathVariable Long itemId,
-            Authentication auth,
+             @RequestHeader("X-Authenticated-User") String username,
             @Valid @RequestBody MenuItemRequest request) {
-        return ResponseEntity.ok(restaurantService.updateMenuItem(itemId, auth.getName(), request));
+        return ResponseEntity.ok(restaurantService.updateMenuItem(itemId, username, request));
     }
 //
     @PatchMapping("/menu/{itemId}/toggle")
     public ResponseEntity<Void> toggleAvailability(
-            @PathVariable Long itemId, Authentication auth) {
-        restaurantService.toggleMenuItemAvailability(itemId, auth.getName());
+            @PathVariable Long itemId,  @RequestHeader("X-Authenticated-User") String username) {
+        restaurantService.toggleMenuItemAvailability(itemId, username);
         return ResponseEntity.noContent().build();
     }
 

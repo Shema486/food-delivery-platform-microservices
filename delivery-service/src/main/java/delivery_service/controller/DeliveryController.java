@@ -2,6 +2,7 @@ package delivery_service.controller;
 
 
 import delivery_service.dto.DeliveryResponse;
+import delivery_service.entity.Delivery;
 import delivery_service.service.DeliveryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -35,6 +36,6 @@ public class DeliveryController {
     @PatchMapping("/{id}/status")
     public ResponseEntity<DeliveryResponse> updateStatus(
             @PathVariable Long id, @RequestParam String status) {
-        return ResponseEntity.ok(deliveryService.updateStatus(id, status));
+        return ResponseEntity.ok(deliveryService.updateStatus(id, Delivery.DeliveryStatus.valueOf(status)));
     }
 }

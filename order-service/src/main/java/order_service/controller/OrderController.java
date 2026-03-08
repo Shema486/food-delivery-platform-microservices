@@ -6,7 +6,6 @@ import order_service.dto.PlaceOrderRequest;
 import order_service.service.OrderService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -22,9 +21,9 @@ public class OrderController {
 
     @PostMapping
     public ResponseEntity<OrderResponse> placeOrder(
-            Authentication auth, @Valid @RequestBody PlaceOrderRequest request) {
+            @RequestHeader("X-Authenticated-User") String username, @Valid @RequestBody PlaceOrderRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(orderService.placeOrder(auth.getName(), request));
+                .body(orderService.placeOrder(username, request));
     }
 
     @GetMapping("/{id}")
@@ -33,8 +32,8 @@ public class OrderController {
     }
 
     @GetMapping("/my-orders")
-    public ResponseEntity<List<OrderResponse>> getMyOrders(Authentication auth) {
-        return ResponseEntity.ok(orderService.getCustomerOrders(auth.getName()));
+    public ResponseEntity<List<OrderResponse>> getMyOrders( @RequestHeader("X-Authenticated-User") String username) {
+        return ResponseEntity.ok(orderService.getCustomerOrders(username));
     }
 
     @GetMapping("/restaurant/{restaurantId}")
@@ -51,7 +50,7 @@ public class OrderController {
 
     @PostMapping("/{id}/cancel")
     public ResponseEntity<OrderResponse> cancel(
-            @PathVariable Long id, Authentication auth) {
-        return ResponseEntity.ok(orderService.cancelOrder(id, auth.getName()));
+            @PathVariable Long id,  @RequestHeader("X-Authenticated-User") String username) {
+        return ResponseEntity.ok(orderService.cancelOrder(id, username));
     }
 }
