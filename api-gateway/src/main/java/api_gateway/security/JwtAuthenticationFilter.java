@@ -47,11 +47,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String username = jwtUtil.extractUsername(token);
+        String roles = String.join(",", jwtUtil.extractRoles(token));
 
         HttpServletRequestWrapper wrappedRequest = new HttpServletRequestWrapper(request) {
             @Override
             public String getHeader(String name) {
                 if ("X-Authenticated-User".equalsIgnoreCase(name)) return username;
+                if ("X-User-Role".equalsIgnoreCase(name)) return roles;
                 return super.getHeader(name);
             }
 
@@ -60,6 +62,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 if ("X-Authenticated-User".equalsIgnoreCase(name)) {
                     return Collections.enumeration(List.of(username));
                 }
+                if ("X-User-Role".equalsIgnoreCase(name)) {
+                    return Collections.enumeration(List.of(roles));
+                }
                 return super.getHeaders(name);
             }
 
@@ -67,6 +72,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             public Enumeration<String> getHeaderNames() {
                 List<String> names = Collections.list(super.getHeaderNames());
                 names.add("X-Authenticated-User");
+                names.add("X-User-Role");
                 return Collections.enumeration(names);
             }
         };
